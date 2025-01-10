@@ -45,4 +45,32 @@ const deleteCategory = async (req, res) => {
     }
 }
 
-module.exports = { addCategory, deleteCategory };
+const updateCategory = async (req, res) => {
+    const { categoryId } = req.params;
+    const { name, description } = req.body;
+    if (!categoryId) {
+        return res.status(400).json({ message: 'Category ID is required.' });
+    }
+    if (!name && !description) {
+        return res.status(400).json({ message: 'At least one field to update is required.' });
+    }
+    try {
+        const updatedCategory = await Category.findByIdAndUpdate(
+            categoryId,
+            { name, description },
+            { new: true }
+        );
+        if (!updatedCategory) {
+            return res.status(404).json({ message: 'Product not found.' });
+        }
+        res.status(200).json({
+            message: 'Product updated successfully!',
+            product: updatedCategory,
+        });
+    } catch (error) {
+        console.error('Error editing category:', error.message);
+        res.status(500).json({ message: 'Server error. Unable to update category.' });
+    }
+};
+
+module.exports = { addCategory, deleteCategory, updateCategory };

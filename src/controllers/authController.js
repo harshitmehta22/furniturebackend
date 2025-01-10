@@ -2,13 +2,14 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-const User = require('../models/authModel')
+const User = require('../models/authModel');
+const notificationModel = require('../models/notificationModel');
 
 const signUp = async (req, res) => {
     try {
-        const { username, email, password } = req.body;
+        const { username, email, password, role } = req.body;
         // Validate input
-        if (!username || !email || !password) {
+        if (!username || !email || !password || !role) {
             return res.status(400).json({ message: 'All fields are required' });
         }
         const emailRegex = /.+@.+\..+/;
@@ -21,12 +22,26 @@ const signUp = async (req, res) => {
         const newUser = new User({
             username,
             email,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role || 'Admin',
         });
         await newUser.save();
+        // Create a notification for the admin
+        const notification = new notificationModel({
+            message: `New user signed up: ${newUser.username} (${newUser.email})`,
+            user: newUser._id,
+            type: 'user-signup',
+        });
+        await notification.save();
+
         res.status(201).json({
-            message: 'User registered successfully',
-            user: { id: newUser._id, username: newUser.username, email: newUser.email },
+            message: 'User registered successfully and notification sent to admin.',
+            user: {
+                id: newUser._id,
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role,
+            },
         });
     } catch (error) {
         console.error(error);
@@ -66,6 +81,7 @@ const login = async (req, res) => {
                 id: user._id,
                 username: user.username,
                 email: user.email,
+                role: user.role
             },
         });
     } catch (error) {

@@ -17,6 +17,12 @@ const productSchema = new mongoose.Schema({
             message: 'Price must be a positive number',
         },
     },
+    height: {
+        type: Number, required: true
+    },
+    width: {
+        type: Number, required: true
+    },
     category: {
         type: String,
         required: true,
